@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEM Vault - بوابة ملفات STEM</title>
+  <!-- مكتبة EmailJS الرسمية -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #10b981;
+      --owner: #f59e0b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+    h2, h3 {
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .auth-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      background: #030712;
+    }
+    .auth-toggle button {
+      flex: 1;
+      padding: 10px;
+      margin-top: 0;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 0;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .auth-toggle button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    input, select {
+      background: #030712;
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      margin-top: 18px;
+    }
+    button:hover {
+      background: var(--primary-hover);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-top: 18px;
+    }
+    .tab-btn {
+      padding: 7px 14px;
+      background: #030712;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      width: auto;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .file-item {
+      background: #030712;
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-right: 4px solid var(--primary);
+    }
+    .file-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .badge {
+      background: #1f2937;
+      color: #93c5fd;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .owner-badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid #f59e0b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .btn-action {
+      background: transparent;
+      border: none;
+      width: auto;
+      padding: 6px 10px;
+      margin: 0;
+      cursor: pointer;
+      font-size: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-view {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .btn-view:hover {
+      background: rgba(56, 189, 248, 0.2);
+    }
+    .btn-delete {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+    .owner-panel {
+      background: #1e1b4b;
+      border: 1px solid #4338ca;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .stat-card {
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-card h4 {
+      font-size: 18px;
+      color: #fbbf24;
+      margin-bottom: 2px;
+    }
+    .stat-card span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- واجهة 1: تسجيل الدخول أو إنشاء حساب -->
+  <div id="step-auth" class="card">
+    <h2>STEM Vault</h2>
+    <p class="subtitle" id="authSubtitle">أنشئ حسابك واحصل على رمز التحقق</p>
+
+    <div class="auth-toggle">
+      <button id="tabRegister" class="active" onclick="switchAuthTab('register')">إنشاء حساب جديد</button>
+      <button id="tabLogin" onclick="switchAuthTab('login')">تسجيل دخول</button>
+    </div>
+
+    <form onsubmit="handleAuthSubmit(event)">
+      <label>البريد الإلكتروني:</label>
+      <input type="email" id="userEmail" placeholder="student@example.com" required>
+
+      <label>كلمة المرور:</label>
+      <input type="password" id="userPassword" placeholder="••••••••" required minlength="6">
+
+      <button id="authBtn" type="submit">متابعة وإرسال كود التأكيد ✉️</button>
+    </form>
+  </div>
+
+  <!-- واجهة 2: التحقق من كود OTP -->
+  <div id="step-otp" class="card hidden">
+    <h2>تأكيد الحساب</h2>
+    <p class="subtitle" id="otpNotice">تم إرسال كود التحقق إلى بريدك الإلكتروني</p>
+    <label>أدخل الرمز المكون من 6 أرقام:</label>
+    <input type="text" id="otpInput" maxlength="6" placeholder="000000" style="text-align: center; font-size: 26px; letter-spacing: 6px; font-weight: bold;">
+    <button onclick="handleVerifyOTP()">تحقق والدخول للمنصة</button>
+    <button style="background: transparent; color: var(--text-muted); margin-top: 8px; font-size: 13px;" onclick="backToAuth()">تعديل البيانات والمحاولة مجدداً</button>
+  </div>
+
+  <!-- واجهة 3: مستودع المواد وقسم الأونر -->
+  <div id="step-dashboard" class="card hidden" style="max-width: 650px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h3 style="text-align: right; margin: 0;">مستودع ملفات STEM</h3>
+        <p style="color: var(--text-muted); font-size: 13px; margin: 0;" id="userBadge"></p>
+        <div id="ownerBadgeContainer"></div>
+      </div>
+      <button onclick="logout()" style="width: auto; margin: 0; padding: 6px 14px; font-size: 12px; background: #dc2626;">خروج</button>
+    </div>
+
+    <!-- لوحة تحكم خاصة بالأونر فقط -->
+    <div id="ownerSection" class="owner-panel hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #fbbf24; font-weight: bold; font-size: 14px;">👑 لوحة تحكم المالك (Owner Control)</span>
+        <button onclick="clearAllData()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 11px; background: #991b1b;">حذف جميع الملفات</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <h4 id="statTotalUsers">0</h4>
+          <span>إجمالي المستخدمين</span>
+        </div>
+        <div class="stat-card">
+          <h4 id="statTotalFiles">0</h4>
+          <span>إجمالي الملفات المرفوعة</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم رفع الملفات -->
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border);">
+      <label>المادة العلمية:</label>
+      <select id="subjectSelect">
+        <option value="Biology">Biology (الأحياء)</option>
+        <option value="Geology">Geology (الجيولوجيا)</option>
+        <option value="English">English (الإنجليزي)</option>
+        <option value="Mechanics">Mechanics (الميكانيكا)</option>
+        <option value="Math">Math (الرياضيات)</option>
+      </select>
+
+      <label>اختر الملف للرفع:</label>
+      <input type="file" id="fileInput">
+      <button onclick="handleUploadFile()">رفع ومشاركة الملف 📂</button>
+    </div>
+
+    <!-- تبويبات التصفية -->
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="filterBy('All', this)">الكل</button>
+      <button class="tab-btn" onclick="filterBy('Biology', this)">Biology</button>
+      <button class="tab-btn" onclick="filterBy('Geology', this)">Geology</button>
+      <button class="tab-btn" onclick="filterBy('English', this)">English</button>
+      <button class="tab-btn" onclick="filterBy('Mechanics', this)">Mechanics</button>
+      <button class="tab-btn" onclick="filterBy('Math', this)">Math</button>
+    </div>
+
+    <!-- قائمة عرض الملفات لجميع المستخدمين -->
+    <div id="filesList" style="margin-top: 14px;"></div>
+  </div>
+
+  <script>
+    const OWNER_EMAIL = "hobazeema900@gmail.com";
+    const SERVICE_ID  = "service_nzthyi8";
+    const TEMPLATE_ID = "template_rsook3v";
+    const PUBLIC_KEY  = "1iW1iRr1jl5aiKV-5";
+
+    emailjs.init(PUBLIC_KEY);
+
+    let authMode = "register";
+    let pendingUserData = null;
+    let currentUserEmail = "";
+    let generatedOTP = null;
+    let currentFilter = 'All';
+
+    // قاعدة بيانات IndexedDB لحفظ الملفات كاملة وتمكين فتحها
+    let db;
+    const request = indexedDB.open("STEMVaultDB", 1);
+    request.onupgradeneeded = function(e) {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("files")) {
+        db.createObjectStore("files", { keyPath: "id" });
+      }
+    };
+    request.onsuccess = function(e) {
+      db = e.target.result;
+    };
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      const tabReg = document.getElementById("tabRegister");
+      const tabLog = document.getElementById("tabLogin");
+      const btn = document.getElementById("authBtn");
+      const sub = document.getElementById("authSubtitle");
+
+      if (mode === 'register') {
+        tabReg.classList.add("active");
+        tabLog.classList.remove("active");
+        btn.innerText = "إنشاء الحساب وإرسال كود التأكيد ✉️";
+        sub.innerText = "أنشئ حسابك واحصل على رمز التحقق";
+      } else {
+        tabLog.classList.add("active");
+        tabReg.classList.remove("active");
+        btn.innerText = "دخول وإرسال كود التأكيد ✉️";
+        sub.innerText = "أدخل بياناتك وسيصلك رمز تأكيد الدخول";
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById("userEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("userPassword").value;
+      const btn = document.getElementById("authBtn");
+
+      let users = JSON.parse(localStorage.getItem("stem_users") || "{}");
+
+      if (authMode === "register") {
+        if (users[email]) {
+          alert("هذا البريد مسجل بالفعل! يمكنك الانتقال إلى تسجيل الدخول.");
+          return;
+        }
+      } else {
+        if (!users[email]) {
+          alert("هذا البريد غير مسجل! أنشئ حساباً جديداً أولاً.");
+          return;
+        }
+        if (users[email].password !== pass) {
+          alert("كلمة المرور غير صحيحة!");
+          return;
+        }
+      }
+
+      pendingUserData = { email, password: pass, mode: authMode };
+      generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+      btn.disabled = true;
+      btn.innerText = "جاري إرسال كود التأكيد...";
+
+      emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+        to_email: email,
+        otp_code: generatedOTP
+      })
+      .then(() => {
+        alert("تم إرسال كود التحقق بنجاح إلى: " + email);
+        document.getElementById("step-auth").classList.add("hidden");
+        document.getElementById("step-otp").classList.remove("hidden");
+        document.getElementById("otpNotice").innerText = "تم إرسال كود الأمان إلى " + email;
+        btn.disabled = false;
+        switchAuthTab(authMode);
+      })
+      .catch((error) => {
+        alert("حدث خطأ أثناء الإرسال: " + (error.text || JSON.stringify(error)));
+        btn.disabled = false;
+        switchAuthTab(authMode);
+      });
+    }
+
+    function handleVerifyOTP() {
+      const entered = document.getElementById("otpInput").value.trim();
+
+      if (entered === generatedOTP) {
+        let users = JSON.parse(localStorage.getItem("stem_users") || "{}");
+        currentUserEmail = pendingUserData.email;
+
+        if (pendingUserData.mode === "register") {
+          users[currentUserEmail] = { password: pendingUserData.password };
+          localStorage.setItem("stem_users", JSON.stringify(users));
+          alert("تم تأكيد البريد وإنشاء الحساب بنجاح!");
+        } else {
+          alert("تم تسجيل الدخول بنجاح!");
+        }
+
+        document.getElementById("step-otp").classList.add("hidden");
+        document.getElementById("step-dashboard").classList.remove("hidden");
+        document.getElementById("userBadge").innerText = currentUserEmail;
+
+        checkOwnerPrivileges();
+        loadSavedFiles();
+      } else {
+        alert("كود التحقق غير صحيح! حاول مجدداً.");
+      }
+    }
+
+    function backToAuth() {
+      document.getElementById("step-otp").classList.add("hidden");
+      document.getElementById("step-auth").classList.remove("hidden");
+      document.getElementById("otpInput").value = "";
+    }
+
+    // التحقق من صلاحيات الأونر
+    function checkOwnerPrivileges() {
+      const isOwner = (currentUserEmail === OWNER_EMAIL.toLowerCase());
+      const ownerBadge = document.getElementById("ownerBadgeContainer");
+      const ownerSec = document.getElementById("ownerSection");
+
+      if (isOwner) {
+        ownerBadge.innerHTML = '<span class="owner-badge">👑 المالك الرئيسي (Owner)</span>';
+        ownerSec.classList.remove("hidden");
+        updateOwnerStats();
+      } else {
+        ownerBadge.innerHTML = '';
+        ownerSec.classList.add("hidden");
+      }
+    }
+
+    function updateOwnerStats() {
+      const users = JSON.parse(localStorage.getItem("stem_users") || "{}");
+      document.getElementById("statTotalUsers").innerText = Object.keys(users).length;
+
+      getAllFilesFromDB(function(files) {
+        document.getElementById("statTotalFiles").innerText = files.length;
+      });
+    }
+
+    // حفظ الملف وفتحه باستخدام IndexedDB
+    function handleUploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const subject = document.getElementById("subjectSelect").value;
+
+      if (!fileInput.files.length) {
+        alert("يرجى اختيار ملف أولاً.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const fileRecord = {
+          id: Date.now(),
+          name: file.name,
+          type: file.type || "application/octet-stream",
+          size: (file.size / 1024).toFixed(1) + " KB",
+          subject: subject,
+          date: new Date().toLocaleDateString('ar-EG'),
+          uploader: currentUserEmail,
+          dataUrl: e.target.result
+        };
+
+        const tx = db.transaction("files", "readwrite");
+        const store = tx.objectStore("files");
+        store.add(fileRecord);
+
+        tx.oncomplete = function() {
+          fileInput.value = "";
+          alert("تم رفع الملف بنجاح!");
+          loadSavedFiles();
+          if (currentUserEmail === OWNER_EMAIL.toLowerCase()) updateOwnerStats();
+        };
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function openFile(id) {
+      const tx = db.transaction("files", "readonly");
+      const store = tx.objectStore("files");
+      const req = store.get(id);
+
+      req.onsuccess = function() {
+        const file = req.result;
+        if (!file) return;
+
+        // فتح الملف في تبويب جديد أو تنزيله
+        const win = window.open();
+        if (file.type.startsWith("image/") || file.type === "application/pdf") {
+          win.document.write(`
+            <title>${file.name}</title>
+            <body style="margin:0; background:#0b0f19; display:flex; justify-content:center; align-items:center; min-height:100vh;">
+              <iframe src="${file.dataUrl}" style="border:none; width:100vw; height:100vh;"></iframe>
+            </body>
+          `);
+        } else {
+          const a = document.createElement("a");
+          a.href = file.dataUrl;
+          a.download = file.name;
+          a.click();
+        }
+      };
+    }
+
+    function deleteFile(id) {
+      if (!confirm("هل أنت متأكد من حذف هذا الملف؟")) return;
+
+      const tx = db.transaction("files", "readwrite");
+      tx.objectStore("files").delete(id);
+      tx.oncomplete = function() {
+        loadSavedFiles();
+        if (currentUserEmail === OWNER_EMAIL.toLowerCase()) updateOwnerStats();
+      };
+    }
+
+    function clearAllData() {
+      if (!confirm("تحذير: سيتم حذف جميع الملفات بالكامل! هل أنت متأكد؟")) return;
+      const tx = db.transaction("files", "readwrite");
+      tx.objectStore("files").clear();
+      tx.oncomplete = function() {
+        loadSavedFiles();
+        updateOwnerStats();
+        alert("تم مسح جميع الملفات بنجاح.");
+      };
+    }
+
+    function getAllFilesFromDB(callback) {
+      if (!db) {
+        setTimeout(() => getAllFilesFromDB(callback), 200);
+        return;
+      }
+      const tx = db.transaction("files", "readonly");
+      const store = tx.objectStore("files");
+      const req = store.getAll();
+      req.onsuccess = function() {
+        callback(req.result || []);
+      };
+    }
+
+    function filterBy(subj, btn) {
+      currentFilter = subj;
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderFiles();
+    }
+
+    function renderFiles() {
+      getAllFilesFromDB(function(files) {
+        files.reverse();
+        const container = document.getElementById("filesList");
+        const isOwner = (currentUserEmail === OWNER_EMAIL.toLowerCase());
+
+        if (currentFilter !== 'All') {
+          files = files.filter(f => f.subject === currentFilter);
+        }
+
+        if (!files.length) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px;">لا توجد ملفات في هذا القسم حالياً.</p>';
+          return;
+        }
+
+        container.innerHTML = files.map(f => {
+          const canDelete = isOwner || (f.uploader === currentUserEmail);
+          return `
+            <div class="file-item">
+              <div>
+                <strong style="display: block; font-size: 14px;">${f.name}</strong>
+                <div class="file-meta">${f.size} • رفع بواسطة: ${f.uploader} • ${f.date}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge">${f.subject}</span>
+                <button class="btn-action btn-view" onclick="openFile(${f.id})">فتح 👁️</button>
+                ${canDelete ? `<button class="btn-action btn-delete" onclick="deleteFile(${f.id})">حذف</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    function loadSavedFiles() {
+      renderFiles();
+    }
+
+    function logout() {
+      location.reload();
+    }
+  </script>
+</body>
+</html>
